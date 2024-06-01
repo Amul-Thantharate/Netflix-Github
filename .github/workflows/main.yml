@@ -1,0 +1,41 @@
+name: Build
+
+on:
+    push:
+        branches:
+            - feature
+
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      - name: Build Project with Nodejs
+        uses: actions/setup-node@v1
+        with:
+          node-version: 22
+      - name: Depcheck
+        uses: dependency-check/Dependency-Check_Action@main
+        id: Depcheck
+        with:
+            project: 'Tic-Tac-Toe'
+            path: '.' 
+            format: 'HTML'
+            out: 'reports' # this is the default, no need to specify unless you wish to override it
+            args: >
+                --enableRetired
+                --disableYarnAudit
+                --disableNodeAudit
+      - name: Upload Test results
+        uses: actions/upload-artifact@master
+        with:
+            name: Depcheck report
+            path: ${{github.workspace}}/reports
